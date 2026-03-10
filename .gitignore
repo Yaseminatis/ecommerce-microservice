@@ -1,0 +1,20 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+.env
+
+# macOS sistem dosyaları
+.DS_Store
+
+# IDE dosyaları
+.vscode/
+
+# Logs
+*.log
+
+# Python build
+build/
+dist/

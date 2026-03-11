@@ -1,11 +1,14 @@
 import requests
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
+from pydantic import BaseModel
+from app.route_map import ROUTE_MAP
 
 app = FastAPI(title="Dispatcher Service")
 
-AUTH_SERVICE_URL = "http://localhost:8001"
-USER_SERVICE_URL = "http://localhost:8002"
-PRODUCT_SERVICE_URL = "http://localhost:8003"
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
 
 
 @app.get("/")
@@ -14,19 +17,21 @@ def root():
 
 
 @app.post("/login")
-async def login(request: Request):
-    body = await request.json()
-    response = requests.post(f"{AUTH_SERVICE_URL}/login", json=body)
+def login(data: LoginRequest):
+    target_url = ROUTE_MAP["login"]
+    response = requests.post(f"{target_url}/login", json=data.dict())
     return response.json()
 
 
 @app.get("/users")
 def get_users():
-    response = requests.get(f"{USER_SERVICE_URL}/users")
+    target_url = ROUTE_MAP["users"]
+    response = requests.get(f"{target_url}/users")
     return response.json()
 
 
 @app.get("/products")
 def get_products():
-    response = requests.get(f"{PRODUCT_SERVICE_URL}/products")
+    target_url = ROUTE_MAP["products"]
+    response = requests.get(f"{target_url}/products")
     return response.json()

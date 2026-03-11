@@ -8,7 +8,7 @@ client = TestClient(app)
 def test_login_auth_servicee_gidiyor_mu():
     with patch("app.main.requests.post") as mock_post:
         mock_post.return_value.status_code = 200
-        mock_post.return_value.json.return_value = {"message": "auth service response"}
+        mock_post.return_value.json.return_value = {"message": "auth response"}
 
         response = client.post("/login", json={"username": "test", "password": "1234"})
 

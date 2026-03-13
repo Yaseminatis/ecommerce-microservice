@@ -1,38 +1,67 @@
 from fastapi.testclient import TestClient
-from unittest.mock import patch
 from app.main import app
+from unittest.mock import patch, Mock
 
 client = TestClient(app)
 
 
-def test_login_auth_servicee_gidiyor_mu():
-    with patch("app.main.requests.post") as mock_post:
-        mock_post.return_value.status_code = 200
-        mock_post.return_value.json.return_value = {"message": "auth response"}
-
-        response = client.post("/login", json={"username": "test", "password": "1234"})
-
-        assert response.status_code == 200
-        mock_post.assert_called_once()
+def test_dispatcher_root_calisiyor_mu():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {"message": "Dispatcher service is running"}
 
 
-def test_users_user_servicee_gidiyor_mu():
-    with patch("app.main.requests.get") as mock_get:
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = [{"id": 1, "name": "Yasemin"}]
+@patch("app.main.requests.post")
+def test_login_auth_servicee_gidiyor_mu(mock_post):
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"message": "Login başarılı"}
+    mock_post.return_value = mock_response
 
-        response = client.get("/users")
+    response = client.post(
+        "/login",
+        json={"username": "admin", "password": "1234"}
+    )
 
-        assert response.status_code == 200
-        mock_get.assert_called_once()
+    assert response.status_code == 200
+    assert response.json()["message"] == "Login başarılı"
 
 
-def test_products_product_servicee_gidiyor_mu():
-    with patch("app.main.requests.get") as mock_get:
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = [{"id": 1, "name": "Kalem"}]
+@patch("app.main.requests.get")
+def test_users_user_servicee_gidiyor_mu(mock_get):
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "users": [
+            {"id": 1, "name": "Ali"},
+            {"id": 2, "name": "Ayşe"}
+        ]
+    }
+    mock_get.return_value = mock_response
 
-        response = client.get("/products")
+    response = client.get("/users")
 
-        assert response.status_code == 200
-        mock_get.assert_called_once()
+    assert response.status_code == 200
+    data = response.json()
+    assert "users" in data
+    assert len(data["users"]) == 2
+
+
+@patch("app.main.requests.get")
+def test_products_product_servicee_gidiyor_mu(mock_get):
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "products": [
+            {"id": 1, "name": "Laptop", "price": 25000},
+            {"id": 2, "name": "Mouse", "price": 500}
+        ]
+    }
+    mock_get.return_value = mock_response
+
+    response = client.get("/products")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "products" in data
+    assert len(data["products"]) == 2

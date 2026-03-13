@@ -19,7 +19,7 @@ def root():
 @app.post("/login")
 def login(data: LoginRequest):
     target_url = ROUTE_MAP["login"]
-    response = requests.post(f"{target_url}/login", json=data.dict())
+    response = requests.post(f"{target_url}/login", json=data.model_dump())
     return response.json()
 
 

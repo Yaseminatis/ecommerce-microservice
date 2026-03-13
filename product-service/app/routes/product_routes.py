@@ -9,9 +9,17 @@ products = [
 
 @router.get("/products")
 def get_products():
-    return {"products": products}
+    return {
+        "status": "success",
+        "message": "Ürünler listelendi",
+        "data": products
+    }
 
 @router.post("/products")
 def add_product(product: dict):
     products.append(product)
-    return {"message": "Ürün eklendi", "product": product}
+    return {
+        "status": "success",
+        "message": "Ürün eklendi",
+        "data": product
+    }

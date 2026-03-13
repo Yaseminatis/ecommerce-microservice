@@ -5,6 +5,12 @@ app = FastAPI()
 
 @app.get("/")
 def read_root():
-    return {"message": "Product Service ayakta"}
+    return {
+        "status": "success",
+        "message": "Product service çalışıyor",
+        "data": {
+            "service": "product-service"
+        }
+    }
 
 app.include_router(product_router)

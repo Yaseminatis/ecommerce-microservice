@@ -5,6 +5,12 @@ app = FastAPI(title="User Service")
 
 @app.get("/")
 def root():
-    return {"service": "user-service", "status": "running"}
+    return {
+        "status": "success",
+        "message": "User service çalışıyor",
+        "data": {
+            "service": "user-service"
+        }
+    }
 
 app.include_router(user_router)

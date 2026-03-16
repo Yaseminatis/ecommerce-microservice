@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from app.schemas.product_schema import ProductRequest, ProductResponse
 
 router = APIRouter()
 
@@ -15,11 +16,10 @@ def get_products():
         "data": products
     }
 
-@router.post("/products")
-def add_product(product: dict):
-    products.append(product)
-    return {
-        "status": "success",
-        "message": "Ürün eklendi",
-        "data": product
-    }
+@router.post("/products", response_model=ProductResponse)
+def add_product(product: ProductRequest):
+    products.append(product.model_dump())
+    return ProductResponse(
+    message="Ürün eklendi",
+    product=product
+)

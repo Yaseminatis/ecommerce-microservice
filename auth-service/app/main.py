@@ -7,4 +7,10 @@ app.include_router(auth_router)
 
 @app.get("/")
 def read_root():
-    return {"message": "Auth service ayakta"}
+    return {
+        "status": "success",
+        "message": "Auth service çalışıyor",
+        "data": {
+            "service": "auth-service"
+        }
+    }

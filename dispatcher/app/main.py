@@ -11,6 +11,18 @@ class LoginRequest(BaseModel):
     password: str
 
 
+def forward_request(service: str, path: str, method="GET", data=None):
+    target_url = ROUTE_MAP[service]
+    url = f"{target_url}/{path}"
+
+    if method == "POST":
+        response = requests.post(url, json=data)
+    else:
+        response = requests.get(url)
+
+    return response.json()
+
+
 @app.get("/")
 def root():
     return {"message": "Dispatcher service is running"}
@@ -18,20 +30,14 @@ def root():
 
 @app.post("/login")
 def login(data: LoginRequest):
-    target_url = ROUTE_MAP["login"]
-    response = requests.post(f"{target_url}/login", json=data.model_dump())
-    return response.json()
+    return forward_request("login", "login", "POST", data.model_dump())
 
 
 @app.get("/users")
 def get_users():
-    target_url = ROUTE_MAP["users"]
-    response = requests.get(f"{target_url}/users")
-    return response.json()
+    return forward_request("users", "users")
 
 
 @app.get("/products")
 def get_products():
-    target_url = ROUTE_MAP["products"]
-    response = requests.get(f"{target_url}/products")
-    return response.json()
+    return forward_request("products", "products")

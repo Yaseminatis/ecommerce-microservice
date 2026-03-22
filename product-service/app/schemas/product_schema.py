@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class ProductRequest(BaseModel):
     id: int
     name: str
@@ -7,5 +8,6 @@ class ProductRequest(BaseModel):
 
 
 class ProductResponse(BaseModel):
+    status: str
     message: str
-    product: ProductRequest
+    data: ProductRequest

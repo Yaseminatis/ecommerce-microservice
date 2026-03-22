@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class UserRequest(BaseModel):
     id: int
     name: str
@@ -7,5 +8,6 @@ class UserRequest(BaseModel):
 
 
 class UserResponse(BaseModel):
+    status: str
     message: str
-    user: UserRequest
+    data: UserRequest

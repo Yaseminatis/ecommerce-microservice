@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 from app.main import app
 from unittest.mock import patch, Mock
+import requests
 
 client = TestClient(app)
 
@@ -65,3 +66,29 @@ def test_products_product_servicee_gidiyor_mu(mock_get):
     data = response.json()
     assert "products" in data
     assert len(data["products"]) == 2
+
+
+def test_bilinmeyen_path_404_donuyor_mu():
+    response = client.get("/olmayan-path")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Path bulunamadi"
+
+
+@patch("app.main.requests.get")
+def test_user_service_kapaliyken_503_donuyor_mu(mock_get):
+    mock_get.side_effect = requests.exceptions.ConnectionError("Service down")
+
+    response = client.get("/users")
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Hedef servis su anda ulasilamiyor"
+
+
+@patch("app.main.requests.get")
+def test_product_service_kapaliyken_503_donuyor_mu(mock_get):
+    mock_get.side_effect = requests.exceptions.ConnectionError("Service down")
+
+    response = client.get("/products")
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Hedef servis su anda ulasilamiyor"

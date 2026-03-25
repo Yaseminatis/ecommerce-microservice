@@ -12,6 +12,7 @@ class LoginRequest(BaseModel):
 
 
 PUBLIC_PATHS = ["/login"]
+VALID_TOKEN = "Bearer fake-jwt-token"
 
 
 def is_public_path(path: str) -> bool:
@@ -24,7 +25,13 @@ def check_auth_header(request: Request):
     if not authorization:
         raise HTTPException(
             status_code=401,
-            detail="Authorization header eksik"
+            detail="Token bulunamadi"
+        )
+
+    if authorization != VALID_TOKEN:
+        raise HTTPException(
+            status_code=403,
+            detail="Gecersiz token"
         )
 
 
@@ -64,15 +71,13 @@ def login(data: LoginRequest):
 
 @app.get("/users")
 def get_users(request: Request):
-    if not is_public_path("/users"):
-        check_auth_header(request)
+    check_auth_header(request)
     return forward_request("users", "users")
 
 
 @app.get("/products")
 def get_products(request: Request):
-    if not is_public_path("/products"):
-        check_auth_header(request)
+    check_auth_header(request)
     return forward_request("products", "products")
 
 

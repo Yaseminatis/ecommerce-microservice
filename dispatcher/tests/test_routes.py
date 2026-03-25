@@ -80,18 +80,38 @@ def test_bilinmeyen_path_404_donuyor_mu():
     assert response.json()["detail"] == "Path bulunamadi"
 
 
-def test_users_auth_header_yoksa_401_donuyor_mu():
+def test_users_token_yoksa_401_donuyor_mu():
     response = client.get("/users")
 
     assert response.status_code == 401
-    assert response.json()["detail"] == "Authorization header eksik"
+    assert response.json()["detail"] == "Token bulunamadi"
 
 
-def test_products_auth_header_yoksa_401_donuyor_mu():
+def test_products_token_yoksa_401_donuyor_mu():
     response = client.get("/products")
 
     assert response.status_code == 401
-    assert response.json()["detail"] == "Authorization header eksik"
+    assert response.json()["detail"] == "Token bulunamadi"
+
+
+def test_users_token_yanlissa_403_donuyor_mu():
+    response = client.get(
+        "/users",
+        headers={"Authorization": "Bearer yanlis-token"}
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Gecersiz token"
+
+
+def test_products_token_yanlissa_403_donuyor_mu():
+    response = client.get(
+        "/products",
+        headers={"Authorization": "Bearer yanlis-token"}
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Gecersiz token"
 
 
 @patch("app.main.requests.get")

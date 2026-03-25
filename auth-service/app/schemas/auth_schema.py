@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-
+from typing import Optional
 
 class LoginRequest(BaseModel):
     username: str
@@ -14,4 +14,4 @@ class LoginData(BaseModel):
 class LoginResponse(BaseModel):
     status: str
     message: str
-    data: LoginData
+    data: Optional[LoginData]

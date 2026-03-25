@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from app.schemas.auth_schema import LoginRequest, LoginResponse, LoginData
 
 router = APIRouter()
@@ -16,7 +16,8 @@ def login(data: LoginRequest):
             ),
         )
 
-    raise HTTPException(
-        status_code=401,
-        detail="Kullanıcı adı veya şifre hatalı"
+    return LoginResponse(
+        status="error",
+        message="Kullanıcı adı veya şifre hatalı",
+        data=None
     )

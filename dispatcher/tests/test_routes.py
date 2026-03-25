@@ -40,7 +40,10 @@ def test_users_user_servicee_gidiyor_mu(mock_get):
     }
     mock_get.return_value = mock_response
 
-    response = client.get("/users")
+    response = client.get(
+        "/users",
+        headers={"Authorization": "Bearer fake-jwt-token"}
+    )
 
     assert response.status_code == 200
     data = response.json()
@@ -60,7 +63,10 @@ def test_products_product_servicee_gidiyor_mu(mock_get):
     }
     mock_get.return_value = mock_response
 
-    response = client.get("/products")
+    response = client.get(
+        "/products",
+        headers={"Authorization": "Bearer fake-jwt-token"}
+    )
 
     assert response.status_code == 200
     data = response.json()
@@ -74,11 +80,28 @@ def test_bilinmeyen_path_404_donuyor_mu():
     assert response.json()["detail"] == "Path bulunamadi"
 
 
+def test_users_auth_header_yoksa_401_donuyor_mu():
+    response = client.get("/users")
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Authorization header eksik"
+
+
+def test_products_auth_header_yoksa_401_donuyor_mu():
+    response = client.get("/products")
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Authorization header eksik"
+
+
 @patch("app.main.requests.get")
 def test_user_service_kapaliyken_503_donuyor_mu(mock_get):
     mock_get.side_effect = requests.exceptions.ConnectionError("Service down")
 
-    response = client.get("/users")
+    response = client.get(
+        "/users",
+        headers={"Authorization": "Bearer fake-jwt-token"}
+    )
 
     assert response.status_code == 503
     assert response.json()["detail"] == "Hedef servis su anda ulasilamiyor"
@@ -88,7 +111,10 @@ def test_user_service_kapaliyken_503_donuyor_mu(mock_get):
 def test_product_service_kapaliyken_503_donuyor_mu(mock_get):
     mock_get.side_effect = requests.exceptions.ConnectionError("Service down")
 
-    response = client.get("/products")
+    response = client.get(
+        "/products",
+        headers={"Authorization": "Bearer fake-jwt-token"}
+    )
 
     assert response.status_code == 503
     assert response.json()["detail"] == "Hedef servis su anda ulasilamiyor"

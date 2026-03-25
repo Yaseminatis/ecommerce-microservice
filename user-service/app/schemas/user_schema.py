@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class UserRequest(BaseModel):
+class User(BaseModel):
     id: int
     name: str
     email: str
@@ -10,4 +10,10 @@ class UserRequest(BaseModel):
 class UserResponse(BaseModel):
     status: str
     message: str
-    data: UserRequest
+    data: User
+
+
+class UserListResponse(BaseModel):
+    status: str
+    message: str
+    data: list[User]

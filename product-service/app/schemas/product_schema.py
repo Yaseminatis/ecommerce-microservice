@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class ProductRequest(BaseModel):
+class Product(BaseModel):
     id: int
     name: str
     price: float
@@ -10,4 +10,10 @@ class ProductRequest(BaseModel):
 class ProductResponse(BaseModel):
     status: str
     message: str
-    data: ProductRequest
+    data: Product
+
+
+class ProductListResponse(BaseModel):
+    status: str
+    message: str
+    data: list[Product]

@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from app.routes.product_routes import router as product_router
 
-app = FastAPI()
+app = FastAPI(title="Product Service")
+
+app.include_router(product_router)
+
 
 @app.get("/")
 def read_root():
@@ -12,5 +15,3 @@ def read_root():
             "service": "product-service"
         }
     }
-
-app.include_router(product_router)

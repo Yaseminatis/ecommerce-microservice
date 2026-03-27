@@ -67,10 +67,20 @@ def forward_request(service: str, path: str, method="GET", data=None):
     logger.info(f"Istek yonlendiriliyor -> servis: {service}, method: {method}, url: {url}")
 
     try:
-        if method == "POST":
-            response = requests.post(url, json=data)
-        else:
+        if method == "GET":
             response = requests.get(url)
+        elif method == "POST":
+            response = requests.post(url, json=data)
+        elif method == "PUT":
+            response = requests.put(url, json=data)
+        elif method == "DELETE":
+            response = requests.delete(url)
+        else:
+            logger.error(f"Desteklenmeyen HTTP metodu: {method}")
+            raise HTTPException(
+                status_code=405,
+                detail="Desteklenmeyen HTTP metodu"
+            )
 
         logger.info(f"Servisten yanit alindi -> servis: {service}, status_code: {response.status_code}")
         return response.json()
@@ -111,18 +121,86 @@ def login(data: LoginRequest):
 
 @app.get("/users")
 def get_users(request: Request):
-    logger.info("/users endpointi cagrildi")
+    logger.info("/users GET endpointi cagrildi")
     role = get_user_role(request)
     check_role_permission(role, "/users")
-    return forward_request("users", "users")
+    return forward_request("users", "users", "GET")
+
+
+@app.post("/users")
+async def add_user(request: Request):
+    logger.info("/users POST endpointi cagrildi")
+    role = get_user_role(request)
+    check_role_permission(role, "/users")
+    body = await request.json()
+    return forward_request("users", "users", "POST", body)
+
+
+@app.get("/users/{user_id}")
+def get_user(user_id: int, request: Request):
+    logger.info(f"/users/{user_id} GET endpointi cagrildi")
+    role = get_user_role(request)
+    check_role_permission(role, "/users")
+    return forward_request("users", f"users/{user_id}", "GET")
+
+
+@app.put("/users/{user_id}")
+async def update_user(user_id: int, request: Request):
+    logger.info(f"/users/{user_id} PUT endpointi cagrildi")
+    role = get_user_role(request)
+    check_role_permission(role, "/users")
+    body = await request.json()
+    return forward_request("users", f"users/{user_id}", "PUT", body)
+
+
+@app.delete("/users/{user_id}")
+def delete_user(user_id: int, request: Request):
+    logger.info(f"/users/{user_id} DELETE endpointi cagrildi")
+    role = get_user_role(request)
+    check_role_permission(role, "/users")
+    return forward_request("users", f"users/{user_id}", "DELETE")
 
 
 @app.get("/products")
 def get_products(request: Request):
-    logger.info("/products endpointi cagrildi")
+    logger.info("/products GET endpointi cagrildi")
     role = get_user_role(request)
     check_role_permission(role, "/products")
-    return forward_request("products", "products")
+    return forward_request("products", "products", "GET")
+
+
+@app.post("/products")
+async def add_product(request: Request):
+    logger.info("/products POST endpointi cagrildi")
+    role = get_user_role(request)
+    check_role_permission(role, "/products")
+    body = await request.json()
+    return forward_request("products", "products", "POST", body)
+
+
+@app.get("/products/{product_id}")
+def get_product(product_id: int, request: Request):
+    logger.info(f"/products/{product_id} GET endpointi cagrildi")
+    role = get_user_role(request)
+    check_role_permission(role, "/products")
+    return forward_request("products", f"products/{product_id}", "GET")
+
+
+@app.put("/products/{product_id}")
+async def update_product(product_id: int, request: Request):
+    logger.info(f"/products/{product_id} PUT endpointi cagrildi")
+    role = get_user_role(request)
+    check_role_permission(role, "/products")
+    body = await request.json()
+    return forward_request("products", f"products/{product_id}", "PUT", body)
+
+
+@app.delete("/products/{product_id}")
+def delete_product(product_id: int, request: Request):
+    logger.info(f"/products/{product_id} DELETE endpointi cagrildi")
+    role = get_user_role(request)
+    check_role_permission(role, "/products")
+    return forward_request("products", f"products/{product_id}", "DELETE")
 
 
 @app.get("/{full_path:path}")

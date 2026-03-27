@@ -4,35 +4,36 @@ from app.db.connection import mongo_connection
 class UserRepository:
     def __init__(self):
         self.db = mongo_connection.get_database()
-        self.users = [
-            {"id": 1, "name": "Ali", "email": "ali@mail.com"},
-            {"id": 2, "name": "Ayşe", "email": "ayse@mail.com"},
-        ]
+        self.collection = self.db["users"]
 
     def get_all_users(self):
-        return self.users
+        return list(self.collection.find({}, {"_id": 0}))
 
     def get_user_by_id(self, user_id: int):
-        for user in self.users:
-            if user["id"] == user_id:
-                return user
-        return None
+        return self.collection.find_one({"id": user_id}, {"_id": 0})
 
     def add_user(self, user: dict):
-        self.users.append(user)
+        self.collection.insert_one(user)
         return user
 
     def update_user(self, user_id: int, updated_user: dict):
-        for index, user in enumerate(self.users):
-            if user["id"] == user_id:
-                updated_user["id"] = user_id
-                self.users[index] = updated_user
-                return updated_user
-        return None
+        updated_user["id"] = user_id
+
+        result = self.collection.update_one(
+            {"id": user_id},
+            {"$set": updated_user}
+        )
+
+        if result.matched_count == 0:
+            return None
+
+        return self.get_user_by_id(user_id)
 
     def delete_user(self, user_id: int):
-        for index, user in enumerate(self.users):
-            if user["id"] == user_id:
-                deleted_user = self.users.pop(index)
-                return deleted_user
-        return None
+        user = self.get_user_by_id(user_id)
+
+        if not user:
+            return None
+
+        self.collection.delete_one({"id": user_id})
+        return user

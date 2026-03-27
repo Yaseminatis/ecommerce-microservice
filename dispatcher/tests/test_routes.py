@@ -21,7 +21,7 @@ def test_login_auth_servicee_gidiyor_mu(mock_post):
         "message": "Giriş başarılı",
         "data": {
             "username": "admin",
-            "token": "fake-jwt-token"
+            "token": "admin-token"
         }
     }
     mock_post.return_value = mock_response
@@ -34,7 +34,7 @@ def test_login_auth_servicee_gidiyor_mu(mock_post):
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "success"
-    assert data["data"]["token"] == "fake-jwt-token"
+    assert data["data"]["token"] == "admin-token"
 
 
 @patch("app.main.requests.post")
@@ -51,7 +51,7 @@ def test_login_service_kapaliyken_503_donuyor_mu(mock_post):
 
 
 @patch("app.main.requests.get")
-def test_users_user_servicee_gidiyor_mu(mock_get):
+def test_admin_users_endpointine_erisebiliyor_mu(mock_get):
     mock_response = Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {
@@ -64,7 +64,7 @@ def test_users_user_servicee_gidiyor_mu(mock_get):
 
     response = client.get(
         "/users",
-        headers={"Authorization": "Bearer fake-jwt-token"}
+        headers={"Authorization": "Bearer admin-token"}
     )
 
     assert response.status_code == 200
@@ -74,7 +74,7 @@ def test_users_user_servicee_gidiyor_mu(mock_get):
 
 
 @patch("app.main.requests.get")
-def test_products_product_servicee_gidiyor_mu(mock_get):
+def test_admin_products_endpointine_erisebiliyor_mu(mock_get):
     mock_response = Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {
@@ -87,7 +87,7 @@ def test_products_product_servicee_gidiyor_mu(mock_get):
 
     response = client.get(
         "/products",
-        headers={"Authorization": "Bearer fake-jwt-token"}
+        headers={"Authorization": "Bearer admin-token"}
     )
 
     assert response.status_code == 200
@@ -96,10 +96,37 @@ def test_products_product_servicee_gidiyor_mu(mock_get):
     assert len(data["products"]) == 2
 
 
-def test_bilinmeyen_path_404_donuyor_mu():
-    response = client.get("/olmayan-path")
-    assert response.status_code == 404
-    assert response.json()["detail"] == "Path bulunamadi"
+@patch("app.main.requests.get")
+def test_user_products_endpointine_erisebiliyor_mu(mock_get):
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "products": [
+            {"id": 1, "name": "Laptop", "price": 25000},
+            {"id": 2, "name": "Mouse", "price": 500}
+        ]
+    }
+    mock_get.return_value = mock_response
+
+    response = client.get(
+        "/products",
+        headers={"Authorization": "Bearer user-token"}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "products" in data
+    assert len(data["products"]) == 2
+
+
+def test_user_users_endpointine_erisemiyor_mu():
+    response = client.get(
+        "/users",
+        headers={"Authorization": "Bearer user-token"}
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Bu alana erisim yetkiniz yok"
 
 
 def test_users_token_yoksa_401_donuyor_mu():
@@ -136,13 +163,19 @@ def test_products_token_yanlissa_403_donuyor_mu():
     assert response.json()["detail"] == "Gecersiz token"
 
 
+def test_bilinmeyen_path_404_donuyor_mu():
+    response = client.get("/olmayan-path")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Path bulunamadi"
+
+
 @patch("app.main.requests.get")
-def test_user_service_kapaliyken_503_donuyor_mu(mock_get):
+def test_admin_users_icin_service_kapaliyken_503_donuyor_mu(mock_get):
     mock_get.side_effect = requests.exceptions.ConnectionError("Service down")
 
     response = client.get(
         "/users",
-        headers={"Authorization": "Bearer fake-jwt-token"}
+        headers={"Authorization": "Bearer admin-token"}
     )
 
     assert response.status_code == 503
@@ -150,12 +183,12 @@ def test_user_service_kapaliyken_503_donuyor_mu(mock_get):
 
 
 @patch("app.main.requests.get")
-def test_product_service_kapaliyken_503_donuyor_mu(mock_get):
+def test_admin_products_icin_service_kapaliyken_503_donuyor_mu(mock_get):
     mock_get.side_effect = requests.exceptions.ConnectionError("Service down")
 
     response = client.get(
         "/products",
-        headers={"Authorization": "Bearer fake-jwt-token"}
+        headers={"Authorization": "Bearer admin-token"}
     )
 
     assert response.status_code == 503
@@ -163,12 +196,12 @@ def test_product_service_kapaliyken_503_donuyor_mu(mock_get):
 
 
 @patch("app.main.requests.get")
-def test_user_service_gecersiz_yanit_verirse_502_donuyor_mu(mock_get):
+def test_admin_users_icin_gecersiz_yanit_olursa_502_donuyor_mu(mock_get):
     mock_get.side_effect = requests.exceptions.RequestException("Invalid response")
 
     response = client.get(
         "/users",
-        headers={"Authorization": "Bearer fake-jwt-token"}
+        headers={"Authorization": "Bearer admin-token"}
     )
 
     assert response.status_code == 502
@@ -176,12 +209,12 @@ def test_user_service_gecersiz_yanit_verirse_502_donuyor_mu(mock_get):
 
 
 @patch("app.main.requests.get")
-def test_product_service_gecersiz_yanit_verirse_502_donuyor_mu(mock_get):
+def test_admin_products_icin_gecersiz_yanit_olursa_502_donuyor_mu(mock_get):
     mock_get.side_effect = requests.exceptions.RequestException("Invalid response")
 
     response = client.get(
         "/products",
-        headers={"Authorization": "Bearer fake-jwt-token"}
+        headers={"Authorization": "Bearer admin-token"}
     )
 
     assert response.status_code == 502

@@ -16,7 +16,14 @@ def test_dispatcher_root_calisiyor_mu():
 def test_login_auth_servicee_gidiyor_mu(mock_post):
     mock_response = Mock()
     mock_response.status_code = 200
-    mock_response.json.return_value = {"message": "Login başarılı"}
+    mock_response.json.return_value = {
+        "status": "success",
+        "message": "Giriş başarılı",
+        "data": {
+            "username": "admin",
+            "token": "fake-jwt-token"
+        }
+    }
     mock_post.return_value = mock_response
 
     response = client.post(
@@ -25,7 +32,22 @@ def test_login_auth_servicee_gidiyor_mu(mock_post):
     )
 
     assert response.status_code == 200
-    assert response.json()["message"] == "Login başarılı"
+    data = response.json()
+    assert data["status"] == "success"
+    assert data["data"]["token"] == "fake-jwt-token"
+
+
+@patch("app.main.requests.post")
+def test_login_service_kapaliyken_503_donuyor_mu(mock_post):
+    mock_post.side_effect = requests.exceptions.ConnectionError("Service down")
+
+    response = client.post(
+        "/login",
+        json={"username": "admin", "password": "1234"}
+    )
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Hedef servis su anda ulasilamiyor"
 
 
 @patch("app.main.requests.get")
@@ -138,3 +160,29 @@ def test_product_service_kapaliyken_503_donuyor_mu(mock_get):
 
     assert response.status_code == 503
     assert response.json()["detail"] == "Hedef servis su anda ulasilamiyor"
+
+
+@patch("app.main.requests.get")
+def test_user_service_gecersiz_yanit_verirse_502_donuyor_mu(mock_get):
+    mock_get.side_effect = requests.exceptions.RequestException("Invalid response")
+
+    response = client.get(
+        "/users",
+        headers={"Authorization": "Bearer fake-jwt-token"}
+    )
+
+    assert response.status_code == 502
+    assert response.json()["detail"] == "Servisten gecersiz yanit alindi"
+
+
+@patch("app.main.requests.get")
+def test_product_service_gecersiz_yanit_verirse_502_donuyor_mu(mock_get):
+    mock_get.side_effect = requests.exceptions.RequestException("Invalid response")
+
+    response = client.get(
+        "/products",
+        headers={"Authorization": "Bearer fake-jwt-token"}
+    )
+
+    assert response.status_code == 502
+    assert response.json()["detail"] == "Servisten gecersiz yanit alindi"

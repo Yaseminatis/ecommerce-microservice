@@ -1,5 +1,7 @@
+from app.config import AUTH_SERVICE_URL, USER_SERVICE_URL, PRODUCT_SERVICE_URL
+
 ROUTE_MAP = {
-    "login": "http://127.0.0.1:8001",
-    "users": "http://127.0.0.1:8002",
-    "products": "http://127.0.0.1:8003"
+    "login": AUTH_SERVICE_URL,
+    "users": USER_SERVICE_URL,
+    "products": PRODUCT_SERVICE_URL,
 }

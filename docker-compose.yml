@@ -1,26 +1,73 @@
-version: '3.9'
-
 services:
+  dispatcher:
+    build: ./dispatcher
+    container_name: dispatcher
+    ports:
+      - "8000:8000"
+    environment:
+      - AUTH_SERVICE_URL=http://auth-service:8001
+      - USER_SERVICE_URL=http://user-service:8002
+      - PRODUCT_SERVICE_URL=http://product-service:8003
+    depends_on:
+      - auth-service
+      - user-service
+      - product-service
+
   auth-service:
     build: ./auth-service
     container_name: auth-service
     ports:
       - "8001:8001"
+    env_file:
+      - ./auth-service/.env
+    depends_on:
+      - auth-mongo
 
   user-service:
     build: ./user-service
     container_name: user-service
     ports:
       - "8002:8002"
+    env_file:
+      - ./user-service/.env
+    depends_on:
+      - user-mongo
 
   product-service:
     build: ./product-service
     container_name: product-service
     ports:
       - "8003:8003"
+    env_file:
+      - ./product-service/.env
+    depends_on:
+      - product-mongo
 
-  dispatcher:
-    build: ./dispatcher
-    container_name: dispatcher
+  auth-mongo:
+    image: mongo:latest
+    container_name: auth-mongo
     ports:
-      - "8000:8000"
+      - "27017:27017"
+    volumes:
+      - auth_mongo_data:/data/db
+
+  user-mongo:
+    image: mongo:latest
+    container_name: user-mongo
+    ports:
+      - "27018:27017"
+    volumes:
+      - user_mongo_data:/data/db
+
+  product-mongo:
+    image: mongo:latest
+    container_name: product-mongo
+    ports:
+      - "27019:27017"
+    volumes:
+      - product_mongo_data:/data/db
+
+volumes:
+  auth_mongo_data:
+  user_mongo_data:
+  product_mongo_data:

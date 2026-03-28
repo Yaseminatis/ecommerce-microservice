@@ -1,12 +1,21 @@
+import os
 from pymongo import MongoClient
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class MongoConnection:
     def __init__(self):
         try:
-            self.client = MongoClient("mongodb://localhost:27017")
-            self.database = self.client["auth_db"]
-            print("MongoDB bağlantısı başarılı (auth_db)")
+            mongo_uri = os.getenv("MONGO_URI")
+            database_name = os.getenv("DATABASE_NAME")
+
+            self.client = MongoClient(mongo_uri)
+            self.database = self.client[database_name]
+
+            print(f"MongoDB bağlantısı başarılı ({database_name})")
+
         except Exception as e:
             print("MongoDB bağlantı hatası:", e)
             self.client = None

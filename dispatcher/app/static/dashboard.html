@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dispatcher Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: Arial, sans-serif;
+      background: #eef2ff;
+      color: #1f2937;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .title-box h1 {
+      margin: 0;
+      font-size: 28px;
+      color: #111827;
+    }
+
+    .title-box p {
+      margin: 6px 0 0 0;
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .badge {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: white;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: bold;
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+      border: 1px solid #e5e7eb;
+    }
+
+    .card h3 {
+      margin: 0 0 8px 0;
+      font-size: 13px;
+      color: #6b7280;
+      font-weight: 600;
+    }
+
+    .card p {
+      margin: 0;
+      font-size: 24px;
+      font-weight: bold;
+      color: #111827;
+    }
+
+    .charts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .chart-box,
+    .table-box {
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+      border: 1px solid #e5e7eb;
+    }
+
+    .chart-box h3,
+    .table-box h3 {
+      margin: 0 0 14px 0;
+      font-size: 16px;
+      color: #111827;
+    }
+
+    canvas {
+      width: 100% !important;
+      max-height: 300px !important;
+    }
+
+    .table-box {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+      min-width: 650px;
+    }
+
+    th, td {
+      padding: 12px 10px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      background: #f8fafc;
+      color: #374151;
+      position: sticky;
+      top: 0;
+    }
+
+    tr:hover {
+      background: #f9fafb;
+    }
+
+    .method-badge {
+      display: inline-block;
+      min-width: 58px;
+      text-align: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+      color: white;
+    }
+
+    .method-get {
+      background: #2563eb;
+    }
+
+    .method-post {
+      background: #16a34a;
+    }
+
+    .method-put {
+      background: #d97706;
+    }
+
+    .method-delete {
+      background: #dc2626;
+    }
+
+    .status-2xx {
+      color: #16a34a;
+      font-weight: bold;
+    }
+
+    .status-4xx,
+    .status-5xx {
+      color: #dc2626;
+      font-weight: bold;
+    }
+
+    .path-text {
+      font-family: monospace;
+      color: #374151;
+      font-size: 13px;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+
+      .title-box h1 {
+        font-size: 22px;
+      }
+
+      .card p {
+        font-size: 20px;
+      }
+
+      canvas {
+        max-height: 260px !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="title-box">
+        <h1>Dispatcher Trafik Dashboard</h1>
+        <p>Mikroservis trafiği, durum kodları, detaylı istek kayıtları ve yük testi sonuçları</p>
+      </div>
+      <div class="badge">Canlı Sistem Görünümü</div>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <h3>Toplam İstek</h3>
+        <p id="totalRequests">0</p>
+      </div>
+      <div class="card">
+        <h3>Başarılı (2xx)</h3>
+        <p id="successRequests">0</p>
+      </div>
+      <div class="card">
+        <h3>Hatalı (4xx/5xx)</h3>
+        <p id="errorRequests">0</p>
+      </div>
+      <div class="card">
+        <h3>Farklı Path Sayısı</h3>
+        <p id="pathCount">0</p>
+      </div>
+    </div>
+
+    <div class="cards" id="loadTestCards">
+      <div class="card">
+        <h3>Yük Testi Senaryo Sayısı</h3>
+        <p id="loadScenarioCount">0</p>
+      </div>
+      <div class="card">
+        <h3>En Yüksek Kullanıcı</h3>
+        <p id="maxUsers">0</p>
+      </div>
+      <div class="card">
+        <h3>En Yüksek Ortalama Süre</h3>
+        <p id="maxAvgResponse">0 ms</p>
+      </div>
+      <div class="card">
+        <h3>En Yüksek Hata Oranı</h3>
+        <p id="maxFailureRate">0%</p>
+      </div>
+    </div>
+
+    <div class="charts">
+      <div class="chart-box">
+        <h3>Path Bazlı İstek Sayısı</h3>
+        <canvas id="pathChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>Durum Kodu Dağılımı</h3>
+        <canvas id="statusChart"></canvas>
+      </div>
+    </div>
+
+    <div class="charts">
+      <div class="chart-box">
+        <h3>Kullanıcı Sayısına Göre Ortalama Yanıt Süresi</h3>
+        <canvas id="responseTimeChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>Kullanıcı Sayısına Göre Hata Oranı</h3>
+        <canvas id="failureRateChart"></canvas>
+      </div>
+    </div>
+
+    <div class="table-box">
+      <h3>Detaylı Log Tablosu</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Path</th>
+            <th>Status Code</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+        <tbody id="logTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="table-box" style="margin-top: 18px;">
+      <h3>Yük Testi Sonuçları</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Kullanıcı</th>
+            <th>Ortalama Yanıt Süresi (ms)</th>
+            <th>Hata Oranı (%)</th>
+            <th>İstek / Saniye</th>
+          </tr>
+        </thead>
+        <tbody id="loadTestTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let pathChartInstance = null;
+    let statusChartInstance = null;
+    let responseTimeChartInstance = null;
+    let failureRateChartInstance = null;
+
+    function getMethodClass(method) {
+      const value = (method || "").toUpperCase();
+      if (value === "GET") return "method-get";
+      if (value === "POST") return "method-post";
+      if (value === "PUT") return "method-put";
+      if (value === "DELETE") return "method-delete";
+      return "method-get";
+    }
+
+    async function loadLogs() {
+      const response = await fetch('/logs');
+      const result = await response.json();
+      const logs = result.data || [];
+
+      document.getElementById('totalRequests').textContent = logs.length;
+
+      const successCount = logs.filter(log => String(log.status_code).startsWith('2')).length;
+      const errorCount = logs.filter(log =>
+        String(log.status_code).startsWith('4') || String(log.status_code).startsWith('5')
+      ).length;
+
+      document.getElementById('successRequests').textContent = successCount;
+      document.getElementById('errorRequests').textContent = errorCount;
+
+      const pathCounts = {};
+      const statusCounts = {};
+
+      logs.forEach(log => {
+        pathCounts[log.path] = (pathCounts[log.path] || 0) + 1;
+        statusCounts[log.status_code] = (statusCounts[log.status_code] || 0) + 1;
+      });
+
+      document.getElementById('pathCount').textContent = Object.keys(pathCounts).length;
+
+      if (pathChartInstance) pathChartInstance.destroy();
+      if (statusChartInstance) statusChartInstance.destroy();
+
+      pathChartInstance = new Chart(document.getElementById('pathChart'), {
+        type: 'bar',
+        data: {
+          labels: Object.keys(pathCounts),
+          datasets: [{
+            label: 'İstek Sayısı',
+            data: Object.values(pathCounts),
+            backgroundColor: '#818cf8',
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0
+              }
+            }
+          }
+        }
+      });
+
+      statusChartInstance = new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(statusCounts),
+          datasets: [{
+            label: 'Durum Kodları',
+            data: Object.values(statusCounts),
+            backgroundColor: ['#60a5fa', '#f87171', '#fbbf24', '#34d399', '#a78bfa']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      });
+
+      const tableBody = document.getElementById('logTableBody');
+      tableBody.innerHTML = '';
+
+      logs.slice().reverse().forEach(log => {
+        const row = document.createElement('tr');
+
+        let statusClass = '';
+        if (String(log.status_code).startsWith('2')) {
+          statusClass = 'status-2xx';
+        } else if (
+          String(log.status_code).startsWith('4') ||
+          String(log.status_code).startsWith('5')
+        ) {
+          statusClass = 'status-4xx';
+        }
+
+        row.innerHTML = `
+          <td>
+            <span class="method-badge ${getMethodClass(log.method)}">${log.method}</span>
+          </td>
+          <td class="path-text">${log.path}</td>
+          <td class="${statusClass}">${log.status_code}</td>
+          <td>${log.timestamp}</td>
+        `;
+
+        tableBody.appendChild(row);
+      });
+    }
+
+    async function loadLoadTestResults() {
+      const response = await fetch('/static/load_test_results.json');
+      const results = await response.json();
+
+      document.getElementById('loadScenarioCount').textContent = results.length;
+
+      const maxUsers = results.length ? Math.max(...results.map(item => item.users)) : 0;
+      const maxAvgResponse = results.length ? Math.max(...results.map(item => item.avg_response_time)) : 0;
+      const maxFailureRate = results.length ? Math.max(...results.map(item => item.failure_rate)) : 0;
+
+      document.getElementById('maxUsers').textContent = maxUsers;
+      document.getElementById('maxAvgResponse').textContent = `${maxAvgResponse} ms`;
+      document.getElementById('maxFailureRate').textContent = `${maxFailureRate}%`;
+
+      if (responseTimeChartInstance) responseTimeChartInstance.destroy();
+      if (failureRateChartInstance) failureRateChartInstance.destroy();
+
+      responseTimeChartInstance = new Chart(document.getElementById('responseTimeChart'), {
+        type: 'line',
+        data: {
+          labels: results.map(item => item.users),
+          datasets: [{
+            label: 'Ortalama Yanıt Süresi (ms)',
+            data: results.map(item => item.avg_response_time),
+            borderColor: '#4f46e5',
+            backgroundColor: '#c7d2fe',
+            tension: 0.3,
+            fill: false
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      });
+
+      failureRateChartInstance = new Chart(document.getElementById('failureRateChart'), {
+        type: 'bar',
+        data: {
+          labels: results.map(item => item.users),
+          datasets: [{
+            label: 'Hata Oranı (%)',
+            data: results.map(item => item.failure_rate),
+            backgroundColor: '#f87171',
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+
+      const loadTestTableBody = document.getElementById('loadTestTableBody');
+      loadTestTableBody.innerHTML = '';
+
+      results.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${item.users}</td>
+          <td>${item.avg_response_time}</td>
+          <td>${item.failure_rate}</td>
+          <td>${item.requests_per_second}</td>
+        `;
+        loadTestTableBody.appendChild(row);
+      });
+    }
+
+    loadLogs();
+    loadLoadTestResults();
+  </script>
+</body>
+</html>

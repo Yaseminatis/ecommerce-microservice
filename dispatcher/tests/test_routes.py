@@ -3,6 +3,16 @@ from app.main import app
 from unittest.mock import patch, Mock
 import requests
 
+class FakeAuthRepository:
+    def __init__(self, role=None, has_permission=True):
+        self.role = role
+        self.permission = has_permission
+
+    def get_role_by_token(self, token):
+        return self.role
+
+    def has_permission(self, role, path):
+        return self.permission
 client = TestClient(app)
 
 
@@ -50,8 +60,9 @@ def test_login_service_kapaliyken_503_donuyor_mu(mock_post):
     assert response.json()["detail"] == "Hedef servis su anda ulasilamiyor"
 
 
+@patch("app.main.get_auth_repository", return_value=FakeAuthRepository(role="admin", has_permission=True))
 @patch("app.main.requests.get")
-def test_admin_users_endpointine_erisebiliyor_mu(mock_get):
+def test_admin_users_endpointine_erisebiliyor_mu(mock_get, mock_repo):
     mock_response = Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {
@@ -73,8 +84,9 @@ def test_admin_users_endpointine_erisebiliyor_mu(mock_get):
     assert len(data["users"]) == 2
 
 
+@patch("app.main.get_auth_repository", return_value=FakeAuthRepository(role="admin", has_permission=True))
 @patch("app.main.requests.get")
-def test_admin_products_endpointine_erisebiliyor_mu(mock_get):
+def test_admin_products_endpointine_erisebiliyor_mu(mock_get, mock_repo):
     mock_response = Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {
@@ -96,8 +108,9 @@ def test_admin_products_endpointine_erisebiliyor_mu(mock_get):
     assert len(data["products"]) == 2
 
 
+@patch("app.main.get_auth_repository", return_value=FakeAuthRepository(role="user", has_permission=True))
 @patch("app.main.requests.get")
-def test_user_products_endpointine_erisebiliyor_mu(mock_get):
+def test_user_products_endpointine_erisebiliyor_mu(mock_get, mock_repo):
     mock_response = Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {
@@ -119,7 +132,8 @@ def test_user_products_endpointine_erisebiliyor_mu(mock_get):
     assert len(data["products"]) == 2
 
 
-def test_user_users_endpointine_erisemiyor_mu():
+@patch("app.main.get_auth_repository", return_value=FakeAuthRepository(role="user", has_permission=False))
+def test_user_users_endpointine_erisemiyor_mu(mock_repo):
     response = client.get(
         "/users",
         headers={"Authorization": "Bearer user-token"}
@@ -142,8 +156,8 @@ def test_products_token_yoksa_401_donuyor_mu():
     assert response.status_code == 401
     assert response.json()["detail"] == "Token bulunamadi"
 
-
-def test_users_token_yanlissa_403_donuyor_mu():
+@patch("app.main.get_auth_repository", return_value=FakeAuthRepository(role=None, has_permission=False))
+def test_users_token_yanlissa_403_donuyor_mu(mock_repo):
     response = client.get(
         "/users",
         headers={"Authorization": "Bearer yanlis-token"}
@@ -153,7 +167,8 @@ def test_users_token_yanlissa_403_donuyor_mu():
     assert response.json()["detail"] == "Gecersiz token"
 
 
-def test_products_token_yanlissa_403_donuyor_mu():
+@patch("app.main.get_auth_repository", return_value=FakeAuthRepository(role=None, has_permission=False))
+def test_products_token_yanlissa_403_donuyor_mu(mock_repo):
     response = client.get(
         "/products",
         headers={"Authorization": "Bearer yanlis-token"}
@@ -169,8 +184,9 @@ def test_bilinmeyen_path_404_donuyor_mu():
     assert response.json()["detail"] == "Path bulunamadi"
 
 
+@patch("app.main.get_auth_repository", return_value=FakeAuthRepository(role="admin", has_permission=True))
 @patch("app.main.requests.get")
-def test_admin_users_icin_service_kapaliyken_503_donuyor_mu(mock_get):
+def test_admin_users_icin_service_kapaliyken_503_donuyor_mu(mock_get, mock_repo):
     mock_get.side_effect = requests.exceptions.ConnectionError("Service down")
 
     response = client.get(
@@ -182,8 +198,9 @@ def test_admin_users_icin_service_kapaliyken_503_donuyor_mu(mock_get):
     assert response.json()["detail"] == "Hedef servis su anda ulasilamiyor"
 
 
+@patch("app.main.get_auth_repository", return_value=FakeAuthRepository(role="admin", has_permission=True))
 @patch("app.main.requests.get")
-def test_admin_products_icin_service_kapaliyken_503_donuyor_mu(mock_get):
+def test_admin_products_icin_service_kapaliyken_503_donuyor_mu(mock_get, mock_repo):
     mock_get.side_effect = requests.exceptions.ConnectionError("Service down")
 
     response = client.get(
@@ -195,8 +212,9 @@ def test_admin_products_icin_service_kapaliyken_503_donuyor_mu(mock_get):
     assert response.json()["detail"] == "Hedef servis su anda ulasilamiyor"
 
 
+@patch("app.main.get_auth_repository", return_value=FakeAuthRepository(role="admin", has_permission=True))
 @patch("app.main.requests.get")
-def test_admin_users_icin_gecersiz_yanit_olursa_502_donuyor_mu(mock_get):
+def test_admin_users_icin_gecersiz_yanit_olursa_502_donuyor_mu(mock_get, mock_repo):
     mock_get.side_effect = requests.exceptions.RequestException("Invalid response")
 
     response = client.get(
@@ -208,8 +226,9 @@ def test_admin_users_icin_gecersiz_yanit_olursa_502_donuyor_mu(mock_get):
     assert response.json()["detail"] == "Servisten gecersiz yanit alindi"
 
 
+@patch("app.main.get_auth_repository", return_value=FakeAuthRepository(role="admin", has_permission=True))
 @patch("app.main.requests.get")
-def test_admin_products_icin_gecersiz_yanit_olursa_502_donuyor_mu(mock_get):
+def test_admin_products_icin_gecersiz_yanit_olursa_502_donuyor_mu(mock_get, mock_repo):
     mock_get.side_effect = requests.exceptions.RequestException("Invalid response")
 
     response = client.get(

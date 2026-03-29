@@ -11,12 +11,22 @@ def login(data: LoginRequest):
     user = auth_service.login(data.username, data.password)
 
     if user:
+        token = "user-token"
+
+        if user["username"] == "admin":
+            token = "admin-token"
+
         return LoginResponse(
             status="success",
             message="Giriş başarılı",
-            data=LoginData(username=user["username"], token="fake-jwt-token"),
+            data=LoginData(
+                username=user["username"],
+                token=token
+            ),
         )
 
     return LoginResponse(
-        status="error", message="Kullanıcı adı veya şifre hatalı", data=None
+        status="error",
+        message="Kullanıcı adı veya şifre hatalı",
+        data=None
     )

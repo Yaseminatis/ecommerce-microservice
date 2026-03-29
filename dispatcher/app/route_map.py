@@ -1,7 +1,10 @@
-from app.config import AUTH_SERVICE_URL, USER_SERVICE_URL, PRODUCT_SERVICE_URL
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 ROUTE_MAP = {
-    "login": AUTH_SERVICE_URL,
-    "users": USER_SERVICE_URL,
-    "products": PRODUCT_SERVICE_URL,
+    "login": os.getenv("AUTH_SERVICE_URL"),
+    "users": os.getenv("USER_SERVICE_URL"),
+    "products": os.getenv("PRODUCT_SERVICE_URL"),
 }

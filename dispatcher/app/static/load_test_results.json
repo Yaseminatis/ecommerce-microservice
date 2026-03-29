@@ -1,0 +1,20 @@
+[
+  {
+    "users": 50,
+    "avg_response_time": 120,
+    "failure_rate": 0.0,
+    "requests_per_second": 18.5
+  },
+  {
+    "users": 100,
+    "avg_response_time": 180,
+    "failure_rate": 1.2,
+    "requests_per_second": 31.4
+  },
+  {
+    "users": 200,
+    "avg_response_time": 260,
+    "failure_rate": 2.8,
+    "requests_per_second": 52.7
+  }
+]

@@ -4,9 +4,12 @@ from pydantic import BaseModel
 from app.route_map import ROUTE_MAP
 from app.core.logger import logger
 from app.repositories.auth_repository import DispatcherAuthRepository
+from app.repositories.log_repository import LogRepository
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(title="Dispatcher Service")
-
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 class LoginRequest(BaseModel):
     username: str
@@ -14,7 +17,7 @@ class LoginRequest(BaseModel):
 
 
 PUBLIC_PATHS = ["/login"]
-
+log_repository = LogRepository()
 
 def get_auth_repository():
     return DispatcherAuthRepository()
@@ -99,8 +102,17 @@ async def log_requests(request: Request, call_next):
     logger.info(f"Gelen istek -> method: {request.method}, path: {request.url.path}")
     response = await call_next(request)
     logger.info(f"Yanit donuldu -> status_code: {response.status_code}, path: {request.url.path}")
-    return response
 
+    try:
+        log_repository.add_log(
+            method=request.method,
+            path=request.url.path,
+            status_code=response.status_code
+        )
+    except Exception as e:
+        logger.error(f"Log MongoDB'ye kaydedilemedi: {str(e)}")
+
+    return response
 
 @app.get("/")
 def root():
@@ -197,6 +209,17 @@ def delete_product(product_id: int, request: Request):
     check_role_permission(role, "/products")
     return forward_request("products", f"products/{product_id}", "DELETE")
 
+@app.get("/logs")
+def get_logs():
+    logger.info("/logs endpointi cagrildi")
+    return {
+        "status": "success",
+        "message": "Loglar listelendi",
+        "data": log_repository.get_logs()
+    }
+@app.get("/dashboard")
+def dashboard():
+    return FileResponse("app/static/dashboard.html")
 
 @app.get("/{full_path:path}")
 def catch_all(full_path: str):

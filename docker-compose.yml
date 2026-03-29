@@ -8,10 +8,13 @@ services:
       - AUTH_SERVICE_URL=http://auth-service:8001
       - USER_SERVICE_URL=http://user-service:8002
       - PRODUCT_SERVICE_URL=http://product-service:8003
+      - MONGO_URI=mongodb://dispatcher-mongo:27017
+      - DATABASE_NAME=dispatcher_db
     depends_on:
       - auth-service
       - user-service
       - product-service
+      - dispatcher-mongo
     networks:
       - microservice-net
 
@@ -51,6 +54,16 @@ services:
     networks:
       - microservice-net
 
+  dispatcher-mongo:
+    image: mongo:latest
+    container_name: dispatcher-mongo
+    expose:
+      - "27017"
+    volumes:
+      - dispatcher_mongo_data:/data/db
+    networks:
+      - microservice-net
+
   auth-mongo:
     image: mongo:latest
     container_name: auth-mongo
@@ -82,6 +95,7 @@ services:
       - microservice-net
 
 volumes:
+  dispatcher_mongo_data:
   auth_mongo_data:
   user_mongo_data:
   product_mongo_data:

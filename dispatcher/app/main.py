@@ -3,6 +3,7 @@ from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from app.route_map import ROUTE_MAP
 from app.core.logger import logger
+from app.repositories.auth_repository import DispatcherAuthRepository
 
 app = FastAPI(title="Dispatcher Service")
 
@@ -14,15 +15,9 @@ class LoginRequest(BaseModel):
 
 PUBLIC_PATHS = ["/login"]
 
-TOKENS = {
-    "Bearer admin-token": "admin",
-    "Bearer user-token": "user",
-}
 
-ROLE_PERMISSIONS = {
-    "admin": ["/users", "/products"],
-    "user": ["/products"],
-}
+def get_auth_repository():
+    return DispatcherAuthRepository()
 
 
 def is_public_path(path: str) -> bool:
@@ -39,20 +34,20 @@ def get_user_role(request: Request):
             detail="Token bulunamadi"
         )
 
-    if authorization not in TOKENS:
+    role = get_auth_repository().get_role_by_token(authorization)
+
+    if not role:
         logger.error("Gecersiz token gonderildi")
         raise HTTPException(
             status_code=403,
             detail="Gecersiz token"
         )
 
-    return TOKENS[authorization]
+    return role
 
 
 def check_role_permission(role: str, path: str):
-    allowed_paths = ROLE_PERMISSIONS.get(role, [])
-
-    if path not in allowed_paths:
+    if not get_auth_repository().has_permission(role, path):
         logger.error(f"Yetkisiz erisim denemesi -> rol: {role}, path: {path}")
         raise HTTPException(
             status_code=403,

@@ -6,11 +6,25 @@ class AuthRepository:
         self.db = mongo_connection.get_database()
         self.collection = self.db["users"]
 
-        if self.collection.count_documents({}) == 0:
-            self.collection.insert_one({
-                "username": "admin",
-                "password": "1234"
-            })
+        self._seed_users()
+
+    def _seed_users(self):
+        seed_users = [
+            {"username": "admin", "password": "1234"},
+            {"username": "yasemin", "password": "1234"},
+            {"username": "senay", "password": "1234"},
+            {"username": "ali", "password": "1234"},
+            {"username": "ayse", "password": "1234"},
+            {"username": "mehmet", "password": "1234"},
+            {"username": "zeynep", "password": "1234"},
+        ]
+
+        for user in seed_users:
+            self.collection.update_one(
+                {"username": user["username"]},
+                {"$setOnInsert": user},
+                upsert=True
+            )
 
     def get_user_by_username(self, username: str):
         return self.collection.find_one(

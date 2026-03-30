@@ -113,6 +113,8 @@
 
     .table-box {
       overflow-x: auto;
+      overflow-y: auto;
+      max-height: 420px;
     }
 
     table {
@@ -134,6 +136,7 @@
       color: #374151;
       position: sticky;
       top: 0;
+      z-index: 1;
     }
 
     tr:hover {
@@ -304,22 +307,23 @@
     </div>
   </div>
 
-  <script>
-    let pathChartInstance = null;
-    let statusChartInstance = null;
-    let responseTimeChartInstance = null;
-    let failureRateChartInstance = null;
+<script>
+  let pathChartInstance = null;
+  let statusChartInstance = null;
+  let responseTimeChartInstance = null;
+  let failureRateChartInstance = null;
 
-    function getMethodClass(method) {
-      const value = (method || "").toUpperCase();
-      if (value === "GET") return "method-get";
-      if (value === "POST") return "method-post";
-      if (value === "PUT") return "method-put";
-      if (value === "DELETE") return "method-delete";
-      return "method-get";
-    }
+  function getMethodClass(method) {
+    const value = (method || "").toUpperCase();
+    if (value === "GET") return "method-get";
+    if (value === "POST") return "method-post";
+    if (value === "PUT") return "method-put";
+    if (value === "DELETE") return "method-delete";
+    return "method-get";
+  }
 
-    async function loadLogs() {
+  async function loadLogs() {
+    try {
       const response = await fetch('/logs');
       const result = await response.json();
       const logs = result.data || [];
@@ -364,9 +368,7 @@
           scales: {
             y: {
               beginAtZero: true,
-              ticks: {
-                precision: 0
-              }
+              ticks: { precision: 0 }
             }
           }
         }
@@ -391,7 +393,7 @@
       const tableBody = document.getElementById('logTableBody');
       tableBody.innerHTML = '';
 
-      logs.slice().reverse().forEach(log => {
+      logs.slice().reverse().slice(0, 15).forEach(log => {
         const row = document.createElement('tr');
 
         let statusClass = '';
@@ -405,9 +407,7 @@
         }
 
         row.innerHTML = `
-          <td>
-            <span class="method-badge ${getMethodClass(log.method)}">${log.method}</span>
-          </td>
+          <td><span class="method-badge ${getMethodClass(log.method)}">${log.method}</span></td>
           <td class="path-text">${log.path}</td>
           <td class="${statusClass}">${log.status_code}</td>
           <td>${log.timestamp}</td>
@@ -415,21 +415,39 @@
 
         tableBody.appendChild(row);
       });
+    } catch (error) {
+      console.error("Loglar yüklenemedi:", error);
     }
+  }
 
-    async function loadLoadTestResults() {
+  async function loadLoadTestResults() {
+    try {
       const response = await fetch('/static/load_test_results.json');
-      const results = await response.json();
+      const rawData = await response.json();
+
+      const results = Array.isArray(rawData)
+        ? rawData
+        : Array.isArray(rawData.tests)
+          ? rawData.tests
+          : [];
+
+      console.log("Yük testi ham veri:", rawData);
+      console.log("Yük testi sonuçları:", results);
 
       document.getElementById('loadScenarioCount').textContent = results.length;
 
-      const maxUsers = results.length ? Math.max(...results.map(item => item.users)) : 0;
-      const maxAvgResponse = results.length ? Math.max(...results.map(item => item.avg_response_time)) : 0;
-      const maxFailureRate = results.length ? Math.max(...results.map(item => item.failure_rate)) : 0;
+      const maxUsers = results.length ? Math.max(...results.map(item => Number(item.users) || 0)) : 0;
+      const maxAvgResponse = results.length ? Math.max(...results.map(item => Number(item.avg_response_time) || 0)) : 0;
+      const maxFailureRate = results.length ? Math.max(...results.map(item => Number(item.failure_rate) || 0)) : 0;
 
       document.getElementById('maxUsers').textContent = maxUsers;
       document.getElementById('maxAvgResponse').textContent = `${maxAvgResponse} ms`;
       document.getElementById('maxFailureRate').textContent = `${maxFailureRate}%`;
+
+      const labels = results.map(item => Number(item.users) || 0);
+      const responseTimes = results.map(item => Number(item.avg_response_time) || 0);
+      const failureRates = results.map(item => Number(item.failure_rate) || 0);
+      const rpsValues = results.map(item => Number(item.requests_per_second ?? item.rps) || 0);
 
       if (responseTimeChartInstance) responseTimeChartInstance.destroy();
       if (failureRateChartInstance) failureRateChartInstance.destroy();
@@ -437,10 +455,10 @@
       responseTimeChartInstance = new Chart(document.getElementById('responseTimeChart'), {
         type: 'line',
         data: {
-          labels: results.map(item => item.users),
+          labels: labels,
           datasets: [{
             label: 'Ortalama Yanıt Süresi (ms)',
-            data: results.map(item => item.avg_response_time),
+            data: responseTimes,
             borderColor: '#4f46e5',
             backgroundColor: '#c7d2fe',
             tension: 0.3,
@@ -449,17 +467,22 @@
         },
         options: {
           responsive: true,
-          maintainAspectRatio: false
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
         }
       });
 
       failureRateChartInstance = new Chart(document.getElementById('failureRateChart'), {
         type: 'bar',
         data: {
-          labels: results.map(item => item.users),
+          labels: labels,
           datasets: [{
             label: 'Hata Oranı (%)',
-            data: results.map(item => item.failure_rate),
+            data: failureRates,
             backgroundColor: '#f87171',
             borderRadius: 8
           }]
@@ -481,17 +504,20 @@
       results.forEach(item => {
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td>${item.users}</td>
-          <td>${item.avg_response_time}</td>
-          <td>${item.failure_rate}</td>
-          <td>${item.requests_per_second}</td>
+          <td>${item.users ?? "-"}</td>
+          <td>${item.avg_response_time ?? "-"}</td>
+          <td>${item.failure_rate ?? "-"}</td>
+          <td>${item.requests_per_second ?? item.rps ?? "-"}</td>
         `;
         loadTestTableBody.appendChild(row);
       });
+    } catch (error) {
+      console.error("Yük testi sonuçları yüklenemedi:", error);
     }
+  }
 
-    loadLogs();
-    loadLoadTestResults();
-  </script>
+  loadLogs();
+  loadLoadTestResults();
+</script>
 </body>
 </html>

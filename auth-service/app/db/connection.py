@@ -11,6 +11,9 @@ class MongoConnection:
             mongo_uri = os.getenv("MONGO_URI")
             database_name = os.getenv("DATABASE_NAME")
 
+            if not mongo_uri or not database_name:
+                raise ValueError("MONGO_URI veya DATABASE_NAME tanımlı değil")
+
             self.client = MongoClient(mongo_uri)
             self.database = self.client[database_name]
 

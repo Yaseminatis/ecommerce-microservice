@@ -11,7 +11,5 @@ def read_root():
     return {
         "status": "success",
         "message": "Product service çalışıyor",
-        "data": {
-            "service": "product-service"
-        }
+        "data": {"service": "product-service"},
     }

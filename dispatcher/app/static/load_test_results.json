@@ -1,20 +1,46 @@
 [
   {
     "users": 50,
-    "avg_response_time": 120,
-    "failure_rate": 0.0,
-    "requests_per_second": 18.5
+    "request_count": 6686,
+    "failure_count": 0,
+    "failure_rate": 0,
+    "avg_response_time": 13.04,
+    "median_response_time": 13,
+    "min_response_time": 4,
+    "max_response_time": 57,
+    "requests_per_second": 24.6
   },
   {
     "users": 100,
-    "avg_response_time": 180,
-    "failure_rate": 1.2,
-    "requests_per_second": 31.4
+    "request_count": 9206,
+    "failure_count": 0,
+    "failure_rate": 0,
+    "avg_response_time": 9.56,
+    "median_response_time": 8,
+    "min_response_time": 3,
+    "max_response_time": 66,
+    "requests_per_second": 49.3
   },
   {
     "users": 200,
-    "avg_response_time": 260,
-    "failure_rate": 2.8,
-    "requests_per_second": 52.7
+    "request_count": 20431,
+    "failure_count": 0,
+    "failure_rate": 0,
+    "avg_response_time": 7.32,
+    "median_response_time": 6,
+    "min_response_time": 2,
+    "max_response_time": 101,
+    "requests_per_second": 99.5
+  },
+  {
+    "users": 500,
+    "request_count": 76141,
+    "failure_count": 0,
+    "failure_rate": 0,
+    "avg_response_time": 9.37,
+    "median_response_time": 6,
+    "min_response_time": 2,
+    "max_response_time": 216,
+    "requests_per_second": 247.9
   }
 ]

@@ -692,6 +692,139 @@ Bu yapı sayesinde sistem:
 
 bir hale getirilmiştir.
 
+## 5. Uygulamaya Ait Açıklamalar, Ekran Görüntüleri, Test Senaryoları ve Sonuçlar
+
+Bu bölümde geliştirilen mikroservis tabanlı e-ticaret sisteminin çalıştırılması, servislerin erişim yapısı, uygulama çıktıları, test senaryoları ve elde edilen sonuçlar sunulmaktadır. Sistem Docker Compose kullanılarak ayağa kaldırılmış ve tüm istekler Dispatcher (API Gateway) üzerinden yönetilmiştir.
+
+---
+
+### 5.1. Sistemin Çalıştırılması ve Container Yapısı
+
+Sistem aşağıdaki komut ile başlatılmıştır:
+
+```bash
+docker compose up --build
+```
+
+Bu işlem sonrasında Dispatcher, Auth, User ve Product servisleri ile her servise ait MongoDB veritabanları ayrı containerlar olarak çalışmaktadır.
+
+Aşağıdaki ekran görüntüsünde çalışan container’lar görülmektedir:
+
+![Docker Containerlar](images/docker-ps.png)
+
+---
+
+### 5.2. Dispatcher’ın Dışa Açık Olması
+
+Projede güvenlik ve merkezi kontrol amacıyla yalnızca Dispatcher servisi dış dünyaya açılmıştır. Diğer mikroservisler yalnızca Docker ağı üzerinden erişilebilir durumdadır.
+
+`docker-compose.yml` dosyasında:
+
+- Dispatcher için `ports` kullanılmıştır
+- Diğer servisler için `expose` kullanılmıştır
+
+Bu yapı sayesinde istemci doğrudan mikroservislere erişememekte, tüm istekler Dispatcher üzerinden geçmektedir.
+
+Aşağıdaki ekran görüntüsünde bu yapı açıkça görülmektedir:
+
+![Docker Compose Yapısı](images/docker-compose-yapisi.png)
+
+Dispatcher servisinin çalıştığı aşağıdaki ekran görüntüsü ile doğrulanmıştır:
+
+![Dispatcher Çalışıyor](images/dispatcher-root.png)
+
+---
+
+### 5.3. Uygulama İşlevlerinin Test Edilmesi
+
+#### 5.3.1. Login İşlemi
+
+Kullanıcı giriş işlemi `/login` endpointi üzerinden gerçekleştirilmiştir. Doğru kullanıcı adı ve şifre ile giriş yapıldığında sistem başarılı şekilde token üretmektedir.
+
+![Login Başarılı](images/login-success.png)
+
+---
+
+#### 5.3.2. Kullanıcı Listeleme
+
+Admin yetkisine sahip kullanıcı ile `/users` endpointine yapılan istek sonucunda kullanıcı listesi başarıyla alınmıştır.
+
+![Kullanıcı Listeleme](images/users-list.png)
+
+---
+
+#### 5.3.3. Ürün Listeleme
+
+`/products` endpointine yapılan istek sonucunda ürün listesi başarıyla alınmıştır.
+
+![Ürün Listeleme](images/products-list.png)
+
+---
+
+### 5.4. Yetkilendirme ve Hata Yönetimi
+
+Sistemde yetkilendirme mekanizmasının doğru çalıştığı test edilmiştir.
+
+Yanlış token ile yapılan istekte sistem erişimi reddetmektedir:
+
+![Geçersiz Token](images/invalid-token.png)
+
+Token olmadan yapılan istekte ise sistem `401 Unauthorized` hatası döndürmektedir:
+
+![Yetkisiz Erişim](images/unauthorized-no-token.png)
+
+---
+
+### 5.5. Loglama Sistemi
+
+Dispatcher servisi gelen tüm istekleri middleware aracılığıyla loglamakta ve MongoDB üzerinde saklamaktadır. Yük testi sonrası log sayısının arttığı gözlemlenmiştir.
+
+Aşağıdaki ekran görüntüsünde log kayıtları görülmektedir:
+
+![Loglar](images/logs-endpoint.png)
+
+---
+
+### 5.6. Dashboard Görüntüleme
+
+Dispatcher içerisinde sunulan dashboard arayüzü üzerinden sistem logları ve bazı metrikler görsel olarak takip edilebilmektedir.
+
+![Dashboard](images/dashboard.png)
+
+---
+
+### 5.7. Yük Testleri (Locust)
+
+Sistemin performansını değerlendirmek amacıyla Locust aracı kullanılarak yük testleri gerçekleştirilmiştir.
+
+Test senaryoları:
+
+- 50 eş zamanlı kullanıcı
+- 100 eş zamanlı kullanıcı
+- 200 eş zamanlı kullanıcı
+- 500 eş zamanlı kullanıcı
+
+Aşağıda bu testlere ait ekran görüntüleri yer almaktadır:
+
+![Locust 50](images/locust-50.png)
+![Locust 100](images/locust-100.png)
+![Locust 200](images/locust-200.png)
+![Locust 500](images/locust-500.png)
+
+---
+
+### 5.8. Test Sonuçlarının Değerlendirilmesi
+
+Gerçekleştirilen testler sonucunda sistemin doğru şekilde çalıştığı gözlemlenmiştir.
+
+- Dispatcher tüm istekleri doğru servislere yönlendirmiştir
+- Yetkilendirme mekanizması doğru çalışmıştır
+- Hatalı isteklerde uygun HTTP durum kodları dönülmüştür
+- Yük testleri altında sistem kararlı çalışmıştır
+- Loglama sistemi aktif şekilde veri toplamıştır
+
+Sonuç olarak geliştirilen sistem, mikroservis mimarisi ve API Gateway yaklaşımına uygun, çalışır ve test edilmiş bir yapı sunmaktadır.
+
 ##  Sonuç ve Tartışma
 
 Bu projede mikroservis mimarisi temel alınarak, Dispatcher (API Gateway) merkezli bir e-ticaret sistemi tasarlanmış ve başarıyla gerçekleştirilmiştir. Geliştirilen sistemde, servisler birbirinden bağımsız çalışacak şekilde yapılandırılmış ve tüm istekler merkezi bir Dispatcher üzerinden yönetilmiştir.
